@@ -20,7 +20,7 @@ class SenderWorker(threading.Thread):
         while not self._shutdown_flag_.is_set():
             try:
                 connection, packet = self._queue_.get(block=False, timeout=SENDER_POOLING_TIME)
-                logger.warning("Sender send packet {} ".format(packet))
+                logger.info("Sender send packet {} ".format(packet))
                 packet = packet.encode('utf-8')
                 data_size = len(packet)
                 packet = data_size.to_bytes(4, 'big', signed=True) + packet

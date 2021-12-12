@@ -25,7 +25,7 @@ class ServerNetwork:
         self._receiver_list_ = {}
         self._received_queue_ = queue.Queue(0)
 
-        logger.warning("Server is Listening on {}:{}".format(self._IP_, self._PORT_))
+        logger.info("Server is Listening on {}:{}".format(self._IP_, self._PORT_))
         self._connection_listener_ = ConnectionListener(self._socket_, self._received_queue_, self._receiver_list_)
         self._connection_listener_.start()
 

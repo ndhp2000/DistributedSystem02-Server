@@ -26,7 +26,7 @@ class ReceiverWorker(threading.Thread):
                 packet = json.loads(raw_packet.decode('utf-8'))
                 packet['__client_address__'] = self._address_
                 self._received_queue_.put(packet)
-                logger.warning(
+                logger.info(
                     "Connection to {}:{} received a packet {}".format(self._address_[0], self._address_[1], packet))
             except socket.timeout:
                 pass
@@ -58,7 +58,7 @@ class ConnectionListener(threading.Thread):
             try:
                 connection, address = self._socket_.accept()
                 connection.settimeout(CONNECTION_TIMEOUT)
-                logger.warning('Open Connection with {}:{}'.format(address[0], address[1]))
+                logger.info('Open Connection with {}:{}'.format(address[0], address[1]))
                 receiver = ReceiverWorker(connection, address, self._received_queue_)
                 self._receiver_list_[address] = receiver
                 receiver.start()
