@@ -3,6 +3,7 @@ import logging
 import queue
 import socket
 
+from config import SERVER_PORT, SERVER_IP
 from network.receiver import ConnectionListener
 from network.sender import SenderWorker
 
@@ -11,8 +12,8 @@ CONNECTION_LISTENER_TIME_OUT = 0.2
 
 
 class ServerNetwork:
-    _IP_ = '127.0.0.1'
-    _PORT_ = 12345
+    _IP_ = SERVER_IP
+    _PORT_ = SERVER_PORT
 
     def __init__(self):
         self._socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,12 +38,15 @@ class ServerNetwork:
         }
         self._sender_.send(connection, packet)
 
-    def receive(self):
-        try:
-            packet = self._received_queue_.get()  # Return also meta-data
-            return packet
-        except queue.Empty:
-            return None
+    def receive(self, max_nums_packets: int):
+        result = []
+        for i in range(max_nums_packets):
+            try:
+                packet = self._received_queue_.get(block=False)
+                result.append(packet)
+            except queue.Empty:
+                return result
+        return result
 
     def broadcast(self, packet):
         packet = {
@@ -54,7 +58,7 @@ class ServerNetwork:
             if connection:
                 self._sender_.send(connection, packet)
             else:
-                del self._receiver_list_[receiver_key]
+                del self._receiver_list_[receiver_key]  # TODO FIX
 
     def safety_closed(self):
         logger.warning('Force to stop. Cleaning all children processes.')

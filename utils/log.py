@@ -1,6 +1,6 @@
 import logging
 
-from config.config import LOGGER
+from config import LOGGER
 
 logging.root.setLevel(logging.NOTSET)
 
