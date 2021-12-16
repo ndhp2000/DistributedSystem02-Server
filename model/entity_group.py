@@ -13,6 +13,11 @@ class AbstractGroup:
         self._entities_dict[entity] = 1
         self._removed_entities.append(entity)
 
+    def remove_by_id(self, deleted_id):
+        for entity in self._entities_dict:
+            if entity.get_id() == deleted_id:
+                entity.remove()
+
     def has(self, entity):
         if self._entities_dict[entity] == 1:
             return False
@@ -21,7 +26,7 @@ class AbstractGroup:
     def empty(self):
         for entity in self._entities_dict:
             self.remove(entity)
-            entity._remove(self)
+            entity.remove(self)
 
     def __len__(self):
         return len(list(self._entities_dict))
@@ -38,19 +43,19 @@ class Group(AbstractGroup):
         super().add(entity)
 
     def update(self, *args, **kwargs):
-        self._removed_entities = []
-
         for entity in self._entities_dict:
             if self.has(entity):
                 entity.update(*args, **kwargs)
 
         for entity in self._removed_entities:
             del self._entities_dict[entity]
+        self._removed_entities = []
 
     def serialize(self):
         result = []
         for entity in self._entities_dict:
-            result.append(entity.serialize())
+            if self.has(entity):
+                result.append(entity.serialize())
         return result
 
     @staticmethod
@@ -59,14 +64,15 @@ class Group(AbstractGroup):
         collided_entities = {}
         for entity1 in group1:
             for entity2 in group2:
-                is_collided = collide_function(entity1, entity2)
-                if is_collided:
-                    if entity1 not in collided_entities:
-                        collided_entities[entity1] = []
-                    if remove_entity_group2_on_hit:
-                        entity2.remove()
-                    else:
-                        collided_entities[entity1].append(entity2)
+                if group1.has(entity1) and group2.has(entity2):
+                    is_collided = collide_function(entity1, entity2)
+                    if is_collided:
+                        if entity1 not in collided_entities:
+                            collided_entities[entity1] = []
+                        if remove_entity_group2_on_hit:
+                            entity2.remove()
+                        else:
+                            collided_entities[entity1].append(entity2)
         return collided_entities
 
     @staticmethod

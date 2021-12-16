@@ -5,20 +5,13 @@ from model.utils import convert_player_direction_to_maze_direction
 
 class Bullet(Entity):
     def __init__(self, bullets_group, bullet_id, player_id, position, direction, maze):
-        super().__init__(BULLET_MAZE_RADIUS, position, BULLET_MOVING_SPEED)
+        super().__init__(bullet_id, BULLET_MAZE_RADIUS, position, BULLET_MOVING_SPEED, bullets_group)
         print("BULLET position: ", self._position_)
         self._group_ = bullets_group
-        self._id_ = bullet_id
         self._player_id_ = player_id
-        self._initial_position_ = self._position_.copy()
         self._direction_ = direction
         self._maze_ = maze
         bullets_group.add(self)
-
-    def remove(self):
-        if self._group_ is not None:
-            self._group_.remove(self)
-        self._is_removed_ = True
 
     def _meet_middle_box(self):
         return int(self._position_[0]) == self._position_[0] and self._position_[1] == int(self._position_[1])
@@ -44,5 +37,5 @@ class Bullet(Entity):
             'id': self._id_,
             'position': [self._position_[0], self._position_[1]],
             'direction': self._direction_,
-            'initial_position': [self._initial_position_[0], self._initial_position_[1]],
+            'player_id': self._player_id_
         }

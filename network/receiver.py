@@ -8,11 +8,12 @@ CONNECTION_TIMEOUT = 0.1
 
 
 class ReceiverWorker(threading.Thread):
-    def __init__(self, connection, address, received_queue):
+    def __init__(self, connection, address, received_queue, disconnect_callback):
         threading.Thread.__init__(self)
         self._connection_ = connection
         self._address_ = address
         self._received_queue_ = received_queue
+        self._disconnect_callback_ = disconnect_callback
         self._shutdown_flag_ = threading.Event()
 
     def run(self):
@@ -35,21 +36,25 @@ class ReceiverWorker(threading.Thread):
                 self.set_shutdown_flag()  # Close the receiver connection
 
         self._connection_.close()
+        self._disconnect_callback_(self._address_)
         logger.warning('Close connection to {}:{}'.format(self._address_[0], self._address_[1]))
 
     def set_shutdown_flag(self):
         self._shutdown_flag_.set()
 
     def get_connection(self):
+        if self._shutdown_flag_.is_set():
+            return None
         return self._connection_
 
 
 class ConnectionListener(threading.Thread):
-    def __init__(self, game_socket, received_queue, receiver_list):
+    def __init__(self, game_socket, received_queue, receiver_list, disconnect_callback):
         threading.Thread.__init__(self)
         self._socket_ = game_socket
         self._received_queue_ = received_queue
         self._receiver_list_ = receiver_list
+        self._disconnect_callback_ = disconnect_callback
         self._shutdown_flag_ = threading.Event()
 
     def run(self):
@@ -59,7 +64,8 @@ class ConnectionListener(threading.Thread):
                 connection, address = self._socket_.accept()
                 connection.settimeout(CONNECTION_TIMEOUT)
                 logger.info('Open Connection with {}:{}'.format(address[0], address[1]))
-                receiver = ReceiverWorker(connection, address, self._received_queue_)
+                receiver = ReceiverWorker(connection, address, self._received_queue_,
+                                          disconnect_callback=self._disconnect_callback_)
                 self._receiver_list_[address] = receiver
                 receiver.start()
             except socket.timeout:

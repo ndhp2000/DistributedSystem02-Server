@@ -5,7 +5,9 @@ LOGGER = [("game-debug", "./logs"), ("game-view", "./logs"), ("game-controller",
           ("game-socket", "./logs")]
 
 PROCESSED_EVENTS_PER_LOOPS = 300
-MAX_PING = 4  # frames
+FRAME_RATE = 45
+FRAME_RATE_MS = int(1000 / FRAME_RATE)
+MAX_PING = 8  # frames
 
 MAP_WIDTH = 32
 MAP_HEIGHT = 16
@@ -26,12 +28,10 @@ PLAYER_MOVING_SPEED = 1 / 16  # box per frame
 PLAYER_MAZE_RADIUS = 1 / 2  # box
 PLAYER_REWARD = 11
 
-FRAME_RATE_MS = int(1000 / 30)
-
-COLLISION_RANGE = 0.25  # Maze distance
+FRAME_RATE_MS = int(1000 / 45)
 
 BULLET_MOVING_SPEED = 4 * PLAYER_MOVING_SPEED
-BULLET_MAZE_RADIUS = 1 / 16 # box
+BULLET_MAZE_RADIUS = 1 / 16  # box
 BULLET_DAMAGE = 5
 BULLET_COST = 1
 COOLDOWN_RANGE = 4

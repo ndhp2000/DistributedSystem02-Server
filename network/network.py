@@ -20,23 +20,34 @@ class ServerNetwork:
         self._socket_.bind((self._IP_, self._PORT_))
         self._socket_.settimeout(CONNECTION_LISTENER_TIME_OUT)
 
-        self._sender_ = SenderWorker()
+        self._sender_ = SenderWorker(disconnect_callback=self._trigger_disconnection)
         self._sender_.start()
 
         self._receiver_list_ = {}
         self._received_queue_ = queue.Queue(0)
 
         logger.info("Server is Listening on {}:{}".format(self._IP_, self._PORT_))
-        self._connection_listener_ = ConnectionListener(self._socket_, self._received_queue_, self._receiver_list_)
+        self._connection_listener_ = ConnectionListener(self._socket_, self._received_queue_, self._receiver_list_,
+                                                        disconnect_callback=self._trigger_disconnection)
         self._connection_listener_.start()
+
+    def _trigger_disconnection(self, address):
+        packet = {'game': {'type': '_LOG_OUT_',
+                           'address': address
+                           }
+                  }
+        self._received_queue_.put(packet)
 
     def send(self, packet, address):
         connection = self._receiver_list_[address].get_connection()
-        packet = {
-            '__time_sent__': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-            'game': packet
-        }
-        self._sender_.send(connection, packet)
+        if connection:
+            packet = {
+                '__time_sent__': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                'game': packet
+            }
+            self._sender_.send(connection, packet)
+        else:  # delete connection async
+            del self._receiver_list_[address]
 
     def receive(self, max_nums_packets: int):
         result = []
@@ -53,12 +64,16 @@ class ServerNetwork:
             '__time_sent__': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             'game': packet
         }
+        deleting_receivers_list = []
         for receiver_key in self._receiver_list_:
             connection = self._receiver_list_[receiver_key].get_connection()
             if connection:
                 self._sender_.send(connection, packet)
             else:
-                del self._receiver_list_[receiver_key]  # TODO FIX
+                deleting_receivers_list.append(receiver_key)
+        # Delete connection async
+        for receiver_key in deleting_receivers_list:
+            del self._receiver_list_[receiver_key]
 
     def safety_closed(self):
         logger.warning('Force to stop. Cleaning all children processes.')

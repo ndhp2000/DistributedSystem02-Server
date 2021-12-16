@@ -2,11 +2,19 @@ import numpy as np
 
 
 class Entity:
-    def __init__(self, maze_radius, position, speed):
+    def __init__(self, entity_id, maze_radius, position, speed, group):
         self._speed_ = speed
-        self._position_ = position.copy()
+        self._id_ = entity_id
+        if position is not None:
+            self._position_ = position.copy()
+        else:
+            self._position_ = None
+        self._group_ = group
         self._is_removed_ = False
         self._maze_radius_ = maze_radius
+
+    def get_id(self):
+        return self._id_
 
     def get_maze_radius(self):
         return self._maze_radius_
@@ -16,6 +24,11 @@ class Entity:
 
     def get_position(self):
         return self._position_.copy()
+
+    def remove(self):
+        if self._group_ is not None:
+            self._group_.remove(self)
+        self._is_removed_ = True
 
     def is_removed(self):
         return self._is_removed_

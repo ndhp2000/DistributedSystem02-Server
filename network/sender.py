@@ -3,14 +3,15 @@ import logging
 import threading
 from queue import Queue, Empty
 
-SENDER_POOLING_TIME = 0.2
+SENDER_POOLING_TIME = 0.1
 logger = logging.getLogger("game-socket")
 
 
 class SenderWorker(threading.Thread):
-    def __init__(self):
+    def __init__(self, disconnect_callback):
         super().__init__()
         self._queue_ = Queue(0)  # already thread-safe
+        self._disconnect_callback_ = disconnect_callback
         self._shutdown_flag_ = threading.Event()
 
     def send(self, connection, packet: dict):
@@ -19,7 +20,7 @@ class SenderWorker(threading.Thread):
     def run(self):
         while not self._shutdown_flag_.is_set():
             try:
-                connection, packet = self._queue_.get(block=False, timeout=SENDER_POOLING_TIME)
+                connection, packet = self._queue_.get(block=True, timeout=SENDER_POOLING_TIME)
                 logger.info("Sender send packet {} ".format(packet))
                 packet = packet.encode('utf-8')
                 data_size = len(packet)
@@ -29,7 +30,6 @@ class SenderWorker(threading.Thread):
                 pass
             except OSError:
                 logger.warning("Connection closed by client")
-
         logger.warning("Close Sender Thread")
 
     def set_shutdown_flag(self):
