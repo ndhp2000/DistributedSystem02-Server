@@ -9,10 +9,10 @@ from model.utils import convert_player_direction_to_maze_direction
 
 class Player(Entity):
     def __init__(self, maze: Maze, player_id, players_group, seed, position=None, current_direction=None,
-                 next_direction=None, bullet_cooldown=0):
+                 next_direction=None, bullet_cooldown=0, player_hp=PLAYER_HP):
         super().__init__(player_id, PLAYER_MAZE_RADIUS, position, PLAYER_MOVING_SPEED, players_group)
         self._maze_ = maze
-        self._hp_ = PLAYER_HP
+        self._hp_ = player_hp
         self._bullet_cooldown_ = bullet_cooldown
         self._seed_ = seed
         self._random_ = random.Random(seed)
@@ -21,6 +21,8 @@ class Player(Entity):
         if self._position_ is None:
             self._rand_position_and_direction()
             self._next_direction_ = None
+        self._future_position_ = None
+        self.synchronize()
 
     def _meet_middle_box(self):
         return int(self._position_[0]) == self._position_[0] and self._position_[1] == int(self._position_[1])
@@ -43,15 +45,8 @@ class Player(Entity):
         result = False
         for other_player in self._group_:
             if other_player.get_id != self._id_:
-                if guess_future:
-                    predicted_position = self._position_ + 2 * DIRECTIONS[self._current_direction_] * self._speed_
-                else:
-                    predicted_position = self._position_
-                current_position = self._position_
-                self._position_ = predicted_position
-                if Entity.collide(self, other_player):
+                if Entity.collide(self, other_player, guess_future):
                     result = True
-                self._position_ = current_position
                 if result:
                     return result
         return result
@@ -81,6 +76,14 @@ class Player(Entity):
                     self._shoot_(bullets_group)
         else:
             self._move()
+
+    def synchronize(self):
+        self._future_position_ = self._position_.copy()
+        if not self._meet_middle_box() or self._is_valid_direction(self._current_direction_):
+            self._future_position_ += DIRECTIONS[self._current_direction_] * self._speed_
+
+    def get_future_position(self):
+        return self._future_position_.copy()
 
     def get_origin_id(self):
         return self._id_

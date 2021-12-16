@@ -46,6 +46,9 @@ class Group(AbstractGroup):
         for entity in self._entities_dict:
             if self.has(entity):
                 entity.update(*args, **kwargs)
+        for entity in self._entities_dict:
+            if self.has(entity):
+                entity.synchronize()
 
         for entity in self._removed_entities:
             del self._entities_dict[entity]

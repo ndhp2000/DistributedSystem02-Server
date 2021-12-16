@@ -37,7 +37,7 @@ class MainGameLogic:
                                       position=np.array(player['position']),
                                       current_direction=player['current_direction'],
                                       next_direction=player['next_direction'],
-                                      bullet_cooldown=player['bullet_cooldown']))
+                                      bullet_cooldown=player['bullet_cooldown'], player_hp=player['hp']))
 
     def init_bullets(self, bullets):
         for bullet in bullets:

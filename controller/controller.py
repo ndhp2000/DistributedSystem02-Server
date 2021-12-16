@@ -4,7 +4,7 @@ from collections import deque
 import pygame
 import pygame.locals
 
-from config import PROCESSED_EVENTS_PER_LOOPS, MAX_PING, FRAME_RATE_MS, UP, DOWN, LEFT, RIGHT, SHOOT
+from config import PROCESSED_EVENTS_PER_LOOPS, MAX_PING, FRAME_RATE_MS, UP, DOWN, LEFT, RIGHT, SHOOT, FRAME_RATE
 from model.model import MainGameLogic
 from network.network import ServerNetwork
 from view.view import MainGameView
@@ -18,6 +18,13 @@ class Controller:
             '_GET_STATE_': self._handle_get_state_,
             '_GAME_ACTION_': self._handle_game_action_,
             '_LOG_OUT_': self._handle_log_out_,
+        }
+
+        self.HANDLERS_PRIORITY = {
+            '_JOIN_GAME_': 1,
+            '_GET_STATE_': 3,
+            '_GAME_ACTION_': 0,
+            '_LOG_OUT_': 2,
         }
 
         # Init Network
@@ -68,6 +75,7 @@ class Controller:
     def _update(self):
         # Broadcast and processed packet
         packets = self._network_.receive(PROCESSED_EVENTS_PER_LOOPS)
+        packets.sort(key=lambda packet: self.HANDLERS_PRIORITY[packet['game']['type']])
         for raw_packet in packets:
             self._handle_packet_(raw_packet)
 
@@ -88,7 +96,7 @@ class Controller:
         try:
             while True:
                 while True:
-                    dt = self._clock.tick(30)
+                    dt = self._clock.tick(FRAME_RATE)
                     self._time_elapsed_ += dt
                     while self._time_elapsed_ >= FRAME_RATE_MS:
                         self._time_elapsed_ -= FRAME_RATE_MS

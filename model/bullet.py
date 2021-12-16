@@ -11,6 +11,8 @@ class Bullet(Entity):
         self._player_id_ = player_id
         self._direction_ = direction
         self._maze_ = maze
+        self._future_position_ = None
+        self.synchronize()
         bullets_group.add(self)
 
     def _meet_middle_box(self):
@@ -31,6 +33,14 @@ class Bullet(Entity):
 
     def get_origin_id(self):
         return self._player_id_
+
+    def synchronize(self):
+        self._future_position_ = self._position_.copy()
+        if not self._meet_middle_box() or self._is_valid_direction(self._direction_):
+            self._future_position_ += DIRECTIONS[self._direction_] * self._speed_
+
+    def get_future_position(self):
+        return self._future_position_.copy()
 
     def serialize(self):
         return {
