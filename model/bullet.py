@@ -6,7 +6,6 @@ from model.utils import convert_player_direction_to_maze_direction
 class Bullet(Entity):
     def __init__(self, bullets_group, bullet_id, player_id, position, direction, maze):
         super().__init__(bullet_id, BULLET_MAZE_RADIUS, position, BULLET_MOVING_SPEED, bullets_group)
-        print("BULLET position: ", self._position_)
         self._group_ = bullets_group
         self._player_id_ = player_id
         self._direction_ = direction
@@ -49,3 +48,6 @@ class Bullet(Entity):
             'direction': self._direction_,
             'player_id': self._player_id_
         }
+
+    def __lt__(self, other):
+        return tuple(self.get_id()) < tuple(other.get_id())

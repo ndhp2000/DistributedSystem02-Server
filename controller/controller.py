@@ -22,10 +22,11 @@ class Controller:
 
         self.HANDLERS_PRIORITY = {
             '_JOIN_GAME_': 1,
-            '_GET_STATE_': 3,
-            '_GAME_ACTION_': 0,
-            '_LOG_OUT_': 2,
+            '_GET_STATE_': 0,
+            '_GAME_ACTION_': 2,
+            '_LOG_OUT_': 3,
         }
+        self.debug_file = open("server.txt", "w")
 
         # Init Network
         self._network_ = ServerNetwork()
@@ -89,7 +90,7 @@ class Controller:
 
         # Update with events
         self._logic_.update(processing_events)
-
+        self.debug_file.write(str(self._current_frame_) + " : " + str(self._logic_.serialize()) + "\n")
         # self._view_.update()  # For debug illustration
 
     def loop(self):
@@ -107,6 +108,7 @@ class Controller:
             self._network_.safety_closed()
             # # TODO: DELETE
             # pygame.quit()
+            self.debug_file.close()
             exit()
         print("PLEASE WAIT FOR CLEANING THREADS...")
 
@@ -124,6 +126,11 @@ class Controller:
                     'timeout': self._current_frame_ + MAX_PING}
         self._network_.broadcast(response)
         self._events_queue_.append(response)
+        # Send special join game to log-in client
+        response = {'type': '_JOIN_GAME_FIRST_',
+                    'instance_id': instance_id,
+                    'user_id': user_id}
+        self._network_.send(response, raw_packet['__client_address__'])
 
     def _handle_get_state_(self, raw_packet):
         game_packet = raw_packet['game']

@@ -37,16 +37,16 @@ class Group(AbstractGroup):
         super().__init__()
 
     def __iter__(self):
-        return iter(list(self._entities_dict))
+        return iter(sorted(self._entities_dict.keys()))
 
     def add(self, entity):
         super().add(entity)
 
     def update(self, *args, **kwargs):
-        for entity in self._entities_dict:
+        for entity in sorted(self._entities_dict.keys()):
             if self.has(entity):
                 entity.update(*args, **kwargs)
-        for entity in self._entities_dict:
+        for entity in sorted(self._entities_dict.keys()):
             if self.has(entity):
                 entity.synchronize()
 
@@ -56,7 +56,7 @@ class Group(AbstractGroup):
 
     def serialize(self):
         result = []
-        for entity in self._entities_dict:
+        for entity in sorted(self._entities_dict.keys()):
             if self.has(entity):
                 result.append(entity.serialize())
         return result

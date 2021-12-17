@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 from config import *
 from model.base_entity import Entity
@@ -9,7 +10,7 @@ from model.utils import convert_player_direction_to_maze_direction
 
 class Player(Entity):
     def __init__(self, maze: Maze, player_id, players_group, seed, position=None, current_direction=None,
-                 next_direction=None, bullet_cooldown=0, player_hp=PLAYER_HP):
+                 next_direction=None, bullet_cooldown=0, player_hp=PLAYER_HP, bullet_counter=0, dead_counter=0):
         super().__init__(player_id, PLAYER_MAZE_RADIUS, position, PLAYER_MOVING_SPEED, players_group)
         self._maze_ = maze
         self._hp_ = player_hp
@@ -18,10 +19,17 @@ class Player(Entity):
         self._random_ = random.Random(seed)
         self._current_direction_ = current_direction
         self._next_direction_ = next_direction
+        self._bullet_counter_ = bullet_counter
+        self._dead_counter_ = dead_counter
+        for i in range(self._dead_counter_):  # Refresh the random seed
+            x = self._random_.randint(0, MAP_WIDTH - 1)
+            y = self._random_.randint(0, MAP_HEIGHT - 1)
+
         if self._position_ is None:
             self._rand_position_and_direction()
             self._next_direction_ = None
         self._future_position_ = None
+
         self.synchronize()
 
     def _meet_middle_box(self):
@@ -91,10 +99,15 @@ class Player(Entity):
     def get_hp(self):
         return self._hp_
 
+    def get_current_direction(self):
+        return self._current_direction_
+
     def _shoot_(self, bullets_group):
         if self._bullet_cooldown_ == 0:
-            Bullet(bullets_group, self._id_, self._id_, np.around(self._position_), self._current_direction_,
+            Bullet(bullets_group, (self._id_, self._bullet_counter_), self._id_, np.around(self._position_),
+                   self._current_direction_,
                    self._maze_)
+            self._bullet_counter_ += 1
             self._bullet_cooldown_ = 4 / BULLET_MOVING_SPEED
         self._hp_ -= BULLET_COST
 
@@ -103,14 +116,14 @@ class Player(Entity):
         self._rand_position_and_direction()
 
     def _rand_position_and_direction(self):
+        self._dead_counter_ += 1
         self._next_direction_ = None
-
         while True:
             x = self._random_.randint(0, MAP_WIDTH - 1)
             y = self._random_.randint(0, MAP_HEIGHT - 1)
             self._position_ = np.array((x, y), dtype='float64')
             if not self._check_collide_with_other_players(guess_future=False):
-                for direction in DIRECTIONS:
+                for direction in sorted(DIRECTIONS.keys()):
                     if self._get_next_valid_cell(self._position_, direction) is not None:
                         self._current_direction_ = direction
                         break
@@ -127,9 +140,14 @@ class Player(Entity):
             'current_direction': self._current_direction_,
             'next_direction': self._next_direction_,
             'seed': self._seed_,
-            'bullet_cooldown': self._bullet_cooldown_
+            'bullet_cooldown': self._bullet_cooldown_,
+            'bullet_counter': self._bullet_counter_,
+            'dead_counter': self._dead_counter_
         }
 
     @staticmethod
     def get_player_type():
         return 'human'
+
+    def __lt__(self, other):
+        return self.get_id() < other.get_id()

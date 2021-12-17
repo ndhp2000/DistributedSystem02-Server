@@ -26,3 +26,4 @@ class BulletView(BaseView):
         position = self._bullet.get_position()
         world_position = convert_maze_to_world_pos(position[0], position[1])
         return world_position
+
