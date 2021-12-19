@@ -105,18 +105,25 @@ class Controller:
                         self._update()
         except SystemExit:
             # Safely closed
+            print("PLEASE WAIT FOR CLEANING THREADS...")
             self._network_.safety_closed()
             # # TODO: DELETE
             # pygame.quit()
             self.debug_file.close()
             exit()
-        print("PLEASE WAIT FOR CLEANING THREADS...")
 
     def _handle_packet_(self, raw_packet):
         self.HANDLERS_MAP[raw_packet['game']['type']](raw_packet)
 
     def _handle_join_game_(self, raw_packet):
         instance_id = self._logic_.get_new_instance_id()
+        if instance_id is None:  # can not add new user
+            response = {'type': '_JOIN_GAME_FIRST_',
+                        'instance_id': None,
+                        'user_id': None}
+            self._network_.send(response, raw_packet['__client_address__'])
+            return
+
         user_id = self._logic_.get_new_user_id()
         self._client_addresses_map_[raw_packet['__client_address__']] = {'instance_id': instance_id, 'user_id': user_id}
         response = {'type': '_JOIN_GAME_',
@@ -157,11 +164,12 @@ class Controller:
 
     def _handle_log_out_(self, raw_packet):
         game_packet = raw_packet['game']
-        if self._logic_.check_instance_id(self._client_addresses_map_[game_packet['address']]['instance_id']):
-            response = {'type': '_LOG_OUT_',
-                        'instance_id': self._client_addresses_map_[game_packet['address']]['instance_id'],
-                        'user_id': self._client_addresses_map_[game_packet['address']]['user_id'],
-                        'timeout': self._current_frame_ + MAX_PING
-                        }
-            self._network_.broadcast(response)
-            self._events_queue_.append(response)
+        if self._client_addresses_map_.get(game_packet['address'], None):
+            if self._logic_.check_instance_id(self._client_addresses_map_[game_packet['address']]['instance_id']):
+                response = {'type': '_LOG_OUT_',
+                            'instance_id': self._client_addresses_map_[game_packet['address']]['instance_id'],
+                            'user_id': self._client_addresses_map_[game_packet['address']]['user_id'],
+                            'timeout': self._current_frame_ + MAX_PING
+                            }
+                self._network_.broadcast(response)
+                self._events_queue_.append(response)

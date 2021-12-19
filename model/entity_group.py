@@ -4,10 +4,12 @@ from model.base_entity import Entity
 class AbstractGroup:
     def __init__(self):
         self._entities_dict = {}
+        self._index_entities = {}
         self._removed_entities = []
 
     def add(self, entity):
         self._entities_dict[entity] = 0
+        self._index_entities[entity.get_id()] = entity
 
     def remove(self, entity):
         self._entities_dict[entity] = 1
@@ -92,7 +94,4 @@ class PlayerGroup(Group):
         return result
 
     def reward_player(self, player_id, reward_amount):
-        for player in self._entities_dict:
-            if player.get_id() == player_id:
-                player.reward(reward_amount)
-                break
+        self._index_entities[player_id].reward(reward_amount)

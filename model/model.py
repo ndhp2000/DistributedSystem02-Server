@@ -3,7 +3,7 @@ from random import Random
 
 import numpy as np
 
-from config import PLAYER_REWARD, BULLET_DAMAGE
+from config import PLAYER_REWARD, BULLET_DAMAGE, MAXIMUM_PLAYERS
 from model.bullet import Bullet
 from model.entity_group import PlayerGroup, Group
 from model.maze import Maze
@@ -95,7 +95,6 @@ class MainGameLogic:
         self._players_.update(event, self._bullets_)
 
     def _handle_log_out_(self, event):
-        print('Handle LOG OUT', event)
         self._players_.remove_by_id(event['user_id'])
         self._connected_instances_.remove(event['instance_id'])
 
@@ -105,6 +104,8 @@ class MainGameLogic:
         return result
 
     def get_new_instance_id(self):
+        if len(self._connected_instances_) == MAXIMUM_PLAYERS:
+            return None
         result = str(uuid.uuid4())
         self._connected_instances_.add(result)
         return result
