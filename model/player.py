@@ -1,5 +1,4 @@
 import random
-from datetime import datetime
 
 from config import *
 from model.base_entity import Entity

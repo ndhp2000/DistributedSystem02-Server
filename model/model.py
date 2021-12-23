@@ -1,5 +1,4 @@
 import uuid
-from random import Random
 
 import numpy as np
 

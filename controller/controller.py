@@ -1,3 +1,4 @@
+import logging
 import random
 from collections import deque
 
@@ -7,57 +8,46 @@ import pygame.locals
 from config import PROCESSED_EVENTS_PER_LOOPS, MAX_PING, FRAME_RATE_MS, UP, DOWN, LEFT, RIGHT, SHOOT, FRAME_RATE
 from model.model import MainGameLogic
 from network.network import ServerNetwork
-from view.view import MainGameView
+
+logger = logging.getLogger("game-controller")
 
 
 class Controller:
     def __init__(self):
-
         self.HANDLERS_MAP = {
             '_JOIN_GAME_': self._handle_join_game_,
             '_GET_STATE_': self._handle_get_state_,
             '_GAME_ACTION_': self._handle_game_action_,
             '_LOG_OUT_': self._handle_log_out_,
         }
-
         self.HANDLERS_PRIORITY = {
             '_JOIN_GAME_': 1,
             '_GET_STATE_': 0,
             '_GAME_ACTION_': 2,
             '_LOG_OUT_': 3,
         }
+
         self.debug_file = open("server.txt", "w")
 
         # Init Network
         self._network_ = ServerNetwork()
-        self._client_addresses_map_ = dict()
-        # Init state
-        self._time_elapsed_ = 0
-        self._current_frame_ = 0
+        # Init State
         self._reset_state_()
-        # Init event queue
-        self._events_queue_ = deque()
-        # Start clock
-        self._clock = pygame.time.Clock()
 
     def _reset_state_(self):
         # Get state form server
         self._time_elapsed_ = 0
         self._current_frame_ = 0
-
+        self._client_addresses_map_ = dict()
         # Init Logic
         self._logic_ = MainGameLogic()
         self._logic_.init_maze(maze_seed=11122000)
         self._logic_.init_players([])
         self._logic_.init_bullets([])
-
-        # # Init View - TODO Delete when deployed
-        # self._view_ = MainGameView()
-        # self._view_.init_maze(self._logic_.get_maze())
-        # self._view_.init_scoreboard(self._logic_.get_players())
-        # self._view_.init_notification()
-        # self._view_.init_players(self._logic_.get_players())
-        # self._view_.init_bullets(self._logic_.get_bullets())
+        # Init event queue
+        self._events_queue_ = deque()
+        # Start clock
+        self._clock = pygame.time.Clock()
 
     @staticmethod
     def _get_event_(key_pressed):
@@ -74,6 +64,7 @@ class Controller:
         return None
 
     def _update(self):
+
         # Broadcast and processed packet
         packets = self._network_.receive(PROCESSED_EVENTS_PER_LOOPS)
         packets.sort(key=lambda packet: self.HANDLERS_PRIORITY[packet['game']['type']])
@@ -91,7 +82,6 @@ class Controller:
         # Update with events
         self._logic_.update(processing_events)
         self.debug_file.write(str(self._current_frame_) + " : " + str(self._logic_.serialize()) + "\n")
-        # self._view_.update()  # For debug illustration
 
     def loop(self):
         try:
@@ -107,13 +97,12 @@ class Controller:
             # Safely closed
             print("PLEASE WAIT FOR CLEANING THREADS...")
             self._network_.safety_closed()
-            # # TODO: DELETE
-            # pygame.quit()
             self.debug_file.close()
             exit()
 
     def _handle_packet_(self, raw_packet):
         self.HANDLERS_MAP[raw_packet['game']['type']](raw_packet)
+        logger.info("Process packet {}".format(raw_packet['game']['type']))
 
     def _handle_join_game_(self, raw_packet):
         instance_id = self._logic_.get_new_instance_id()

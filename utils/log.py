@@ -15,7 +15,7 @@ class GameLog:
     @staticmethod
     def register_logger(log_name, log_dir=None):
         logger = logging.getLogger(log_name)
-        # logger.addHandler(GameLog.get_console_handler())
+        logger.addHandler(GameLog.get_console_handler())
         if log_dir is not None:
             logger.addHandler(GameLog.get_file_handler("{}/{}.log".format(log_dir, log_name)))
 
