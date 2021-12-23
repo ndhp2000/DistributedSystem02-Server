@@ -54,6 +54,8 @@ class Group(AbstractGroup):
 
         for entity in self._removed_entities:
             del self._entities_dict[entity]
+            del self._index_entities[entity.get_id()]
+
         self._removed_entities = []
 
     def serialize(self):
