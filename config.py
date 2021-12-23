@@ -24,7 +24,7 @@ PLAYER = "human"
 MACHINE = "machine"
 ENEMY = "enemy"
 
-PLAYER_HP = 10
+PLAYER_HP = 500
 PLAYER_MOVING_SPEED = 1 / 16  # box per frame
 PLAYER_MAZE_RADIUS = 1 / 2  # box
 PLAYER_REWARD = 11
