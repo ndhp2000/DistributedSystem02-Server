@@ -7,7 +7,7 @@ LOGGER = [("game-debug", "./logs"), ("game-view", "./logs"), ("game-controller",
 PROCESSED_EVENTS_PER_LOOPS = 1000
 FRAME_RATE = 45
 FRAME_RATE_MS = int(1000 / FRAME_RATE)
-MAX_PING = 8  # frames
+MAX_PING = 4  # frames
 
 MAP_WIDTH = 32
 MAP_HEIGHT = 16
